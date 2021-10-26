@@ -1,0 +1,60 @@
+name: Tuist Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version for the release (ex. x.x.x)
+        required: true
+      title:
+        description: Title for the release (ex. Chimera)
+        required: true
+
+env:
+  RUBY_VERSION: '3.0.2'
+  TUIST_STATS_OPT_OUT: true
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ env.RUBY_VERSION }}
+    - uses: actions/cache@v2
+      with:
+        path: vendor/bundle
+        key: ${{ runner.os }}-${{ env.RUBY_VERSION }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ env.RUBY_VERSION }}-gems-
+    - name: Bundle install
+      run: |
+        bundle config path vendor/bundle
+        bundle install --jobs 4 --retry 3
+    - name: Get latest release version
+      id: latest-release
+      uses: InsonusK/get-latest-release@v1.0.1
+      with:
+        myToken: ${{ github.token }}
+        exclude_types: draft|prerelease
+        view_top: 1
+    - name: Update Tuist version
+      run: |
+        sed -i '' -e "s/version = \"${{ steps.latest-release.outputs.tag_name }}\"/version = \"${{ github.event.inputs.version }}\"/g" Sources/TuistSupport/Constants.swift
+        sed -i '' -e "s/## Next/## ${{ github.event.inputs.version }} - ${{ github.event.inputs.title }}\"/g" CHANGELOG.md
+    - name: Fourier releae
+      run: ./fourier release tuist ${{ github.event.inputs.version }}
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        token: ${{ github.token }}
+        files: build/*
+        name: ${{ github.event.inputs.version }} - ${{ github.event.inputs.title }}
+        tag_name: ${{ github.event.inputs.version }}
+    - name: Commit CHANGELOG and Constants update
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "[CI] Update CHANGELOG and version for release ${{ github.event.inputs.version }}"
+        branch: main
+        file_pattern: CHANGELOG.md Sources/TuistSupport/Constants.swift
