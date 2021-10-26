@@ -6,6 +6,10 @@ on:
     types:
       - published
 
+env:
+  RUBY_VERSION: '3.0.2'
+  TUIST_STATS_OPT_OUT: true
+
 jobs:
   release:
     runs-on: macos-latest
