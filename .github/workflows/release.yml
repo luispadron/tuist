@@ -9,16 +9,20 @@ on:
 env:
   RUBY_VERSION: '3.0.2'
   TUIST_STATS_OPT_OUT: true
+  VERSION: ${{ github.event.release.tag_name }}
 
 jobs:
   release:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ env.RUBY_VERSION }}
     - name: Update Tuist version
-      run: sed -i '' -e "s/version = \"development\"/version = \"${{ github.event.release.tag_name }}\"/g" Sources/TuistSupport/Constants.swift
+      run: sed -i '' -e "s/version = \"development\"/version = \"${{ env.VERSION }}\"/g" Sources/TuistSupport/Constants.swift
     - name: Fourier releae
-      run: ./fourier release tuist ${{ github.event.release.tag_name }}
+      run: ./fourier release tuist ${{ env.VERSION }}
     - name: Upload release binaries
       uses: alexellis/upload-assets@0.2.2
       env:
