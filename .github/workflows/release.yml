@@ -1,0 +1,23 @@
+name: Tuist Release
+
+on:
+  page_build:
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Update Tuist version
+      run: sed -i '' -e "s/version = \"development\"/version = \"${{ github.ref }}\"/g" Sources/TuistSupport/Constants.swift
+    - name: Fourier releae
+      run: ./fourier release tuist ${{ github.ref }}
+    - name: Upload release binaries
+      uses: alexellis/upload-assets@0.2.2
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      with:
+        asset_paths: '["build/*"]'
