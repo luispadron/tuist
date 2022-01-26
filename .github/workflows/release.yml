@@ -50,5 +50,6 @@ jobs:
     - name: Create pull-request for release changes
       uses: peter-evans/create-pull-request@v3
       with:
+        title: "[Release] Tuist ${{ github.event.inputs.version }} - ${{ github.event.inputs.title }}"
         commit-message: "[Release] Tuist ${{ github.event.inputs.version }} - ${{ github.event.inputs.title }}"
         base: main
